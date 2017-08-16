@@ -1,3 +1,4 @@
+#encoding=utf8
 import chess, chess.pgn
 import numpy
 import sys
@@ -48,33 +49,39 @@ def parse_game(g):
     r = g.headers['Result']
     if r not in rm:
         return None
+    # 转化棋局结果到0 1 -1
     y = rm[r]
     # print >> sys.stderr, 'result:', y
 
     # Generate all boards
+    # 检测棋谱结束是否游戏结束，如果没有，则跳过   认输的情况？
     gn = g.end()
     if not gn.board().is_game_over():
         return None
 
     gns = []
     moves_left = 0
+    # 逆序把棋谱压到gns里
     while gn:
-        gns.append((moves_left, gn, gn.board().turn == 0))
+        gns.append((moves_left, gn, gn.board().turn == 0))# TODO gn.board().turn 不知道啥意思
         gn = gn.parent
         moves_left += 1
 
     print len(gns)
     if len(gns) < 10:
         print g.end()
-
+    # 移除gns最后一个元素，即棋盘初始状态
     gns.pop()
 
+    # 经过以上操作，gns里有所有的走步状态  
+
+    # 从所有棋步里随机选取一个
     moves_left, gn, flip = random.choice(gns) # remove first position
 
     b = gn.board()
-    x = bb2array(b, flip=flip)
+    x = bb2array(b, flip=flip) # x是将棋局中的某一步后的状态给一围化
     b_parent = gn.parent.board()
-    x_parent = bb2array(b_parent, flip=(not flip))
+    x_parent = bb2array(b_parent, flip=(not flip))# x_parent是x的上一步状态
     if flip:
         y = -y
 
@@ -82,7 +89,7 @@ def parse_game(g):
     moves = list(b_parent.legal_moves)
     move = random.choice(moves)
     b_parent.push(move)
-    x_random = bb2array(b_parent, flip=flip)
+    x_random = bb2array(b_parent, flip=flip) # x_random是从x_parent走出的合法随机一步，棋局中并不存在
 
     if moves_left < 3:
         print moves_left, 'moves left'
@@ -100,7 +107,9 @@ def parse_game(g):
 
 def read_all_games(fn_in, fn_out):    
     g = h5py.File(fn_out, 'w')
+    #创建x xr xp 三个shape=(0,64)的数组,byte类型
     X, Xr, Xp = [g.create_dataset(d, (0, 64), dtype='b', maxshape=(None, 64), chunks=True) for d in ['x', 'xr', 'xp']]
+    # 创建两个shape=(0,)的数组,byte类型 TODO 这个shape和一维数组有啥区别？
     Y, M = [g.create_dataset(d, (0,), dtype='b', maxshape=(None,), chunks=True) for d in ['y', 'm']]
     size = 0
     line = 0

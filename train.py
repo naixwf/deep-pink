@@ -1,3 +1,4 @@
+#encoding=utf8
 import load
 import numpy
 import theano
@@ -121,7 +122,10 @@ def get_function(Ws_s, bs_s, dropout=False, update=False):
     return f
 
 def train():
+    # 通过load数据，获取学习资料
     Xc_train, Xc_test, Xr_train, Xr_test, Xp_train, Xp_test = get_data(['x', 'xr', 'xp'])
+
+    #打印xc_train和xp_train的第一条记录
     for board in [Xc_train[0], Xp_train[0]]:
         for row in xrange(8):
             print ' '.join('%2d' % x for x in board[(row*8):((row+1)*8)])
